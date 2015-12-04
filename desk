@@ -19,7 +19,7 @@ cmd_usage() {
 Usage:
 
     $PROGRAM
-        List the current desk and any associated aliases. If no desk 
+        List the current desk and any associated aliases. If no desk
         is being used, display available desks.
     $PROGRAM init
         Initialize desk configuration.
@@ -28,7 +28,7 @@ Usage:
     $PROGRAM (.|go) desk-name
         Activate a desk.
     $PROGRAM edit [desk-name]
-        Edit (or create) a deskfile with the name specified, otherwise 
+        Edit (or create) a deskfile with the name specified, otherwise
         edit the active deskfile.
     $PROGRAM help
         Show this text.
@@ -82,7 +82,7 @@ cmd_init() {
     else
       echo "[ -n \"\$DESK_ENV\" ] && source \"\$DESK_ENV\" || true" >> "$USER_SHELLRC"
     fi
-    
+
     echo "Done. Start adding desks to ${NEW_PREFIX}/desks!"
 }
 
@@ -92,7 +92,7 @@ cmd_go() {
     local DESKEXT=$(get_deskfile_extension)
     local DESKPATH="$(find "${DESKS}/" -name "${TODESK}${DESKEXT}")"
 
-    if [ -z "$DESKPATH" ]; then 
+    if [ -z "$DESKPATH" ]; then
         echo "Desk $TODESK (${TODESK}${DESKEXT}) not found in $DESKS"
         exit 1
     else
@@ -104,31 +104,33 @@ cmd_go() {
 
 cmd_list() {
     if [ ! -d "${DESKS}/" ]; then
-        echo "No desk dir! Run 'desk init'." 
+        echo "No desk dir! Run 'desk init'."
         exit 1
     fi
 
-    local DESKEXT=$(get_deskfile_extension)
-                       
-    find "${DESKS}/" -name "*${DESKEXT}" -print0 | while read -d '' -r f; do
-        local name=$(basename "${f/${DESKEXT}//}") 
-        local desc=$(echo_description "$f")
+    local DESKEXT name desc
+    DESKEXT=$(get_deskfile_extension)
+    {
+        echo "NAME" "$(printf '\t')" "DESCRIPTION"
+        find "${DESKS}/" -name "*${DESKEXT}" -print0 | while read -d '' -r f; do
+            name=$(basename "${f/${DESKEXT}//}")
+            desc=$(echo_description "$f")
 
-        if [ -z "$desc" ]; then
-            echo "$name"
-        else
-            echo "$name" "-" "$desc"
-        fi
-    done
+            if [ -z "$desc" ]; then
+                echo "$name"
+            else
+                echo "$name" "$(printf '\t')" "$desc"
+            fi
+        done
+    } | column -s $'\t' -t
 }
-
 
 cmd_current() {
     local DESKPATH=$DESK_ENV
     local DESK_NAME=${DESKPATH##*/}
     local DESK_NAME=${DESK_NAME%.*}
     if [ -z "$DESKPATH" ]; then
-        echo "No desk activated." 
+        echo "No desk activated."
         echo ""
         cmd_list
         exit 2
@@ -172,7 +174,7 @@ cmd_edit() {
     local DESKEXT=$(get_deskfile_extension)
     local EDIT_PATH="${DESKS}/${DESKNAME_TO_EDIT}${DESKEXT}"
 
-    ${EDITOR:-vi} "$EDIT_PATH" 
+    ${EDITOR:-vi} "$EDIT_PATH"
 }
 
 ## Utilities
@@ -208,7 +210,7 @@ get_running_shell() {
             exit
         fi
     fi
-    
+
     # Fall back to $SHELL otherwise.
     basename "$SHELL"
     exit
