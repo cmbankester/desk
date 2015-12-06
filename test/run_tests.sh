@@ -33,22 +33,22 @@ desk init <<ANSWER
 ANSWER
 
 LIST=$(DESK_DESKS_DIR=${HOME}/examples desk list)
-echo $LIST | grep "desk - the desk I use to work on desk :)" >/dev/null
+echo $LIST | grep "desk           the desk I use to work on desk :)" >/dev/null
 ensure $? "Desk list missing desk (with DESK_DESKS_DIR)"
-echo $LIST | grep "python_project - desk for working on a Python project" >/dev/null
+echo $LIST | grep "python_project desk for working on a Python project" >/dev/null
 ensure $? "Desk list missing python_project (with DESK_DESKS_DIR)"
-echo $LIST | grep "terraform - desk for doing work on a terraform-based repository" >/dev/null
+echo $LIST | grep "terraform      desk for doing work on a terraform-based repository" >/dev/null
 ensure $? "Desk list missing terraform (with DESK_DESKS_DIR)"
 
 rm -rf "$HOME/.desk/desks"
 ln -s "$HOME/examples" "$HOME/.desk/desks"
- 
+
 LIST=$(desk list)
-echo $LIST | grep "desk - the desk I use to work on desk :)" >/dev/null
+echo $LIST | grep "desk           the desk I use to work on desk :)" >/dev/null
 ensure $? "Desk list missing desk (with symlink)"
-echo $LIST | grep "python_project - desk for working on a Python project" >/dev/null
+echo $LIST | grep "python_project desk for working on a Python project" >/dev/null
 ensure $? "Desk list missing python_project (with symlink)"
-echo $LIST | grep "terraform - desk for doing work on a terraform-based repository" >/dev/null
+echo $LIST | grep "terraform      desk for doing work on a terraform-based repository" >/dev/null
 ensure $? "Desk list missing terraform (with symlink)"
 
 mkdir ~/terraform-repo
