@@ -108,21 +108,21 @@ cmd_list() {
         exit 1
     fi
 
-    local DESKEXT name desc
+    local DESKEXT name desc len out longest
     DESKEXT=$(get_deskfile_extension)
-    {
-        echo "NAME" "$(printf '\t')" "DESCRIPTION"
-        find "${DESKS}/" -name "*${DESKEXT}" -print0 | while read -d '' -r f; do
-            name=$(basename "${f/${DESKEXT}//}")
-            desc=$(echo_description "$f")
+    out="NAME-DESCRIPTION"$'\n'
+    longest=0
 
-            if [ -z "$desc" ]; then
-                echo "$name"
-            else
-                echo "$name" "$(printf '\t')" "$desc"
-            fi
-        done
-    } | column -s $'\t' -t
+    while read -d '' -r f; do
+        name=$(basename "${f/${DESKEXT}//}")
+        desc=$(echo_description "$f")
+        len=${#name}
+        (( len > longest )) && longest=$len
+
+        out+="$name-$desc"$'\n'
+    done < <(find "${DESKS}/" -name "*${DESKEXT}" -print0)
+
+    printf "$out" | awk -v padding="$longest" -F - '{ printf "%-*s %s\n", padding, $1, $2 }'
 }
 
 cmd_current() {
