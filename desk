@@ -103,28 +103,76 @@ cmd_go() {
 
 
 cmd_list() {
+    usage() {
+        echo "usage: desk list [options]"
+        echo "	--only-names         List only the names of the desks"
+        echo "	--only-descriptions  List only the descriptions of the desks"
+        echo "	--show-header        Add a header (\"NAME - DESCRIPTION\") to the top of the list"
+        echo "	--delim DELIMITER    Use DELIMITER to separate names from descriptions. Default: \" - \""
+        echo "	--auto-align         Align name/descriptions into columns (ignored if --delim is specified)"
+        echo "	-h, --help           Display help"
+        exit 1
+    }
     if [ ! -d "${DESKS}/" ]; then
+        if [[ "$1" = --help ]] || [[ "$1" = -h ]] || [[ "$@" = *\ --help* ]] || [[ "$@" = *\ -h* ]]; then
+          printf "%s\n" "$(usage)"
+        fi
         echo "No desk dir! Run 'desk init'."
         exit 1
     fi
+    local SHOW_NAMES SHOW_DESCRIPTIONS SHOW_HEADER DESKEXT name desc len out longest DELIMITER AUTO_ALIGN
 
-    local DESKEXT name desc len out longest
+    DELIMITER=" - "
+
+    while [[ $# > 0 ]]; do # if any keys remain in $@
+      case "$1" in
+        --only-names) test "$SHOW_NAMES" != false && SHOW_DESCRIPTIONS=false && AUTO_ALIGN=false ;;
+        --only-descriptions) test "$SHOW_DESCRIPTIONS" != false && SHOW_NAMES=false && AUTO_ALIGN=false ;;
+        --show-header) SHOW_HEADER=true ;;
+        --delim) test -n "$2" && DELIMITER="$2" && AUTO_ALIGN=false && shift ;; # remove an extra key from $@ since we're taking in two params
+        --auto-align) test "$AUTO_ALIGN" != false && AUTO_ALIGN=true ;;
+        --help|-h) printf "%s\n" "$(usage)" && exit 1 ;;
+      esac
+      shift # remove a key from the front of $@
+    done
+
+    if [[ "$SHOW_HEADER" = true ]]; then
+      if [[ "$SHOW_DESCRIPTIONS" = false ]]; then
+        out="NAME"$'\n'
+      elif [[ "$SHOW_NAMES" = false ]]; then
+        out="DESCRIPTION"$'\n'
+      else
+        out="NAME${DELIMITER}DESCRIPTION"$'\n'
+      fi
+    else
+      out=""
+    fi
+
     DESKEXT=$(get_deskfile_extension)
-    out="NAME - DESCRIPTION"$'\n'
     longest=0
 
     while read -d '' -r f; do
-        name=$(basename "${f/${DESKEXT}//}")
-        desc=$(echo_description "$f")
-        len=${#name}
-        (( len > longest )) && longest=$len
-
-        out+="$name - $desc"$'\n'
+        if [[ "$SHOW_NAMES" = false ]]; then
+          desc=$(echo_description "$f")
+          out+="$desc"$'\n'
+        elif [[ "$SHOW_DESCRIPTIONS" = false ]]; then
+          name=$(basename "${f/${DESKEXT}//}")
+          out+="$name"$'\n'
+        else
+          name=$(basename "${f/${DESKEXT}//}")
+          desc=$(echo_description "$f")
+          out+="$name${DELIMITER}$desc"$'\n'
+          len=${#name}
+          (( len > longest )) && longest=$len
+        fi
     done < <(find "${DESKS}/" -name "*${DESKEXT}" -print0)
-
-    printf "%s" "$out" | awk -v padding="$longest" -F' - ' '{
-      printf "%-*s %s\n", padding, $1, substr($0, index($0, " - ")+2, length($0))
-    }'
+    if [[ "$AUTO_ALIGN" = true ]]; then
+      printf "%s" "$out" | awk -v padding="$longest" -F' - ' '{
+        printf "%-*s %s\n", padding, $1, substr($0, index($0, " - ")+2, length($0))
+      }'
+    else
+      printf "%s" "$out"
+    fi
 }
 
 cmd_current() {
